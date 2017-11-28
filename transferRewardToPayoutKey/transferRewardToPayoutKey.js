@@ -2,8 +2,8 @@ var fs = require('fs');
 var Web3 = require('web3');
 var toml = require('toml');
 
-var tomlPath = '../node.toml';
-var specPath = '../spec.json';
+var tomlPath = process.argv[2] || '../node.toml';
+var specPath = process.argv[3] || '../spec.json';
 
 var config = getConfig();
 
