@@ -3,7 +3,6 @@ var Web3 = require('web3');
 var toml = require('toml');
 
 var tomlPath = process.argv[2] || '../node.toml';
-var specPath = process.argv[3] || '../spec.json';
 
 var config = getConfig();
 
@@ -34,14 +33,13 @@ function findKeysCallBack(web3, miningKey, payoutKey) {
 }
 
 function retrievePayoutKey(miningKey, cb) {
-	var specData = JSON.parse(fs.readFileSync(specPath, 'utf8'));
-	var contractAddress = specData.engine.authorityRound.params.validators.safeContract;
+	var contractAddress = config.Ethereum.contracts.KeysStorage.addr;
 	attachToContract(contractAddress, miningKey, retrievePayoutKeyCallBack, cb);
 }
 
 function retrievePayoutKeyCallBack(err, web3, contract, miningKey, cb) {
 	if (err) return finishScript(err);
-	contract.methods.miningPayoutKeysPair(miningKey).call(function(err, payoutKey) {
+	contract.methods.getPayoutByMining(miningKey).call(function(err, payoutKey) {
 		if (err) return finishScript(err);
 		cb(web3, payoutKey);
 	});
