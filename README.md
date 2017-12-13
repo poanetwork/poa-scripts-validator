@@ -1,2 +1,2 @@
-# oracles-scripts-validator
+# poa-scripts-validator
 Script for validator
