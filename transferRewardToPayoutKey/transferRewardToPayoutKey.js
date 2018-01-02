@@ -100,7 +100,7 @@ async function transferRewardToPayoutKeyTX(web3, _from, _to) {
 		return finishScript(err);
 	}
 
-	web3.eth.sendTransaction({gas: estimatedGas, from: _from, to: _to, value: amountToSend}, function(err, result) {
+	web3.eth.sendTransaction({gas: estimatedGas, from: _from, to: _to, value: amountToSend, gasPrice: gasPrice}, function(err, result) {
 		finishScript(err, result, _from, _to);
 	});
 
