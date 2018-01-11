@@ -33,7 +33,7 @@ function findKeysCallBack(web3, miningKey, payoutKey) {
 }
 
 function retrievePayoutKey(miningKey, cb) {
-	var contractAddress = config.Ethereum.contracts.KeysStorage.addr;
+	var contractAddress = config.Ethereum.contracts.KeysManager.addr;
 	attachToContract(contractAddress, miningKey, retrievePayoutKeyCallBack, cb);
 }
 
@@ -74,7 +74,7 @@ function attachToContract(contractAddress, miningKey, retrievePayoutKeyCallBack,
 	configureWeb3(miningKey, function(err, web3) {
 		if (err) return finishScript(err);
 
-		var contractABI = config.Ethereum.contracts.KeysStorage.abi;
+		var contractABI = config.Ethereum.contracts.KeysManager.abi;
 		var contractInstance = new web3.eth.Contract(contractABI, contractAddress);
 		
 		if (retrievePayoutKeyCallBack) retrievePayoutKeyCallBack(null, web3, contractInstance, miningKey, cb);
