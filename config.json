@@ -6,8 +6,27 @@
     },
     "contracts": {
       "KeysManager": {
-        "addr": "0x88a34124bfffa27ef3e052c8dd2908e212643771",
+        "addr": "0x1aa02bd52fe418ac70263351282f66f1dacf898c",
         "abi": [
+          {
+            "constant": true,
+            "inputs": [
+              {
+                "name": "",
+                "type": "address"
+              }
+            ],
+            "name": "successfulValidatorClone",
+            "outputs": [
+              {
+                "name": "",
+                "type": "bool"
+              }
+            ],
+            "payable": false,
+            "stateMutability": "view",
+            "type": "function"
+          },
           {
             "constant": false,
             "inputs": [
@@ -59,7 +78,7 @@
             "constant": true,
             "inputs": [
               {
-                "name": "_miningKey",
+                "name": "_votingKey",
                 "type": "address"
               }
             ],
@@ -178,6 +197,20 @@
               {
                 "name": "isPayoutActive",
                 "type": "bool"
+              }
+            ],
+            "payable": false,
+            "stateMutability": "view",
+            "type": "function"
+          },
+          {
+            "constant": true,
+            "inputs": [],
+            "name": "previousKeysManager",
+            "outputs": [
+              {
+                "name": "",
+                "type": "address"
               }
             ],
             "payable": false,
@@ -309,6 +342,20 @@
             "constant": false,
             "inputs": [
               {
+                "name": "_miningKey",
+                "type": "address"
+              }
+            ],
+            "name": "migrateMiningKey",
+            "outputs": [],
+            "payable": false,
+            "stateMutability": "nonpayable",
+            "type": "function"
+          },
+          {
+            "constant": false,
+            "inputs": [
+              {
                 "name": "_initialKey",
                 "type": "address"
               }
@@ -338,6 +385,20 @@
             "type": "function"
           },
           {
+            "constant": false,
+            "inputs": [
+              {
+                "name": "_initialKey",
+                "type": "address"
+              }
+            ],
+            "name": "migrateInitialKey",
+            "outputs": [],
+            "payable": false,
+            "stateMutability": "nonpayable",
+            "type": "function"
+          },
+          {
             "constant": true,
             "inputs": [
               {
@@ -350,6 +411,20 @@
               {
                 "name": "",
                 "type": "bool"
+              }
+            ],
+            "payable": false,
+            "stateMutability": "view",
+            "type": "function"
+          },
+          {
+            "constant": true,
+            "inputs": [],
+            "name": "contractVersion",
+            "outputs": [
+              {
+                "name": "",
+                "type": "uint8"
               }
             ],
             "payable": false,
@@ -395,14 +470,6 @@
               {
                 "name": "_initialKey",
                 "type": "address"
-              },
-              {
-                "name": "_votingKey",
-                "type": "address"
-              },
-              {
-                "name": "_payoutKey",
-                "type": "address"
               }
             ],
             "name": "getInitialKey",
@@ -433,28 +500,14 @@
               }
             ],
             "name": "createKeys",
-            "outputs": [
-              {
-                "name": "",
-                "type": "uint256"
-              }
-            ],
+            "outputs": [],
             "payable": false,
             "stateMutability": "nonpayable",
             "type": "function"
           },
           {
             "constant": true,
-            "inputs": [
-              {
-                "name": "_key",
-                "type": "address"
-              },
-              {
-                "name": "_miningKey",
-                "type": "address"
-              }
-            ],
+            "inputs": [],
             "name": "initialKeysCount",
             "outputs": [
               {
@@ -497,12 +550,7 @@
               }
             ],
             "name": "swapMiningKey",
-            "outputs": [
-              {
-                "name": "",
-                "type": "uint256"
-              }
-            ],
+            "outputs": [],
             "payable": false,
             "stateMutability": "nonpayable",
             "type": "function"
@@ -541,54 +589,28 @@
             "type": "function"
           },
           {
-            "inputs": [
-              {
-                "name": "_proxyStorage",
-                "type": "address"
-              },
-              {
-                "name": "_poaConsensus",
-                "type": "address"
-              },
-              {
-                "name": "_masterOfCeremony",
-                "type": "address"
-              }
-            ],
-            "payable": false,
-            "stateMutability": "view",
-            "type": "function",
             "constant": true,
+            "inputs": [],
             "name": "masterOfCeremony",
             "outputs": [
               {
                 "name": "",
                 "type": "address"
               }
-            ]
+            ],
+            "payable": false,
+            "stateMutability": "view",
+            "type": "function"
           },
           {
-            "anonymous": false,
+            "constant": true,
             "inputs": [
               {
-                "indexed": false,
                 "name": "_miningKey",
                 "type": "address"
-              },
-              {
-                "indexed": true,
-                "name": "miningKey",
-                "type": "address"
-              },
-              {
-                "indexed": false,
-                "name": "action",
-                "type": "string"
               }
             ],
             "name": "isPayoutActive",
-            "type": "function",
-            "constant": true,
             "outputs": [
               {
                 "name": "",
@@ -596,31 +618,31 @@
               }
             ],
             "payable": false,
-            "stateMutability": "view"
+            "stateMutability": "view",
+            "type": "function"
           },
           {
-            "anonymous": false,
             "inputs": [
               {
-                "indexed": false,
                 "name": "_proxyStorage",
                 "type": "address"
               },
               {
-                "indexed": true,
                 "name": "_poaConsensus",
                 "type": "address"
               },
               {
-                "indexed": false,
                 "name": "_masterOfCeremony",
+                "type": "address"
+              },
+              {
+                "name": "_previousKeysManager",
                 "type": "address"
               }
             ],
-            "name": "VotingKeyChanged",
-            "type": "constructor",
             "payable": false,
-            "stateMutability": "nonpayable"
+            "stateMutability": "nonpayable",
+            "type": "constructor"
           },
           {
             "anonymous": false,
@@ -678,11 +700,6 @@
                 "indexed": false,
                 "name": "action",
                 "type": "string"
-              },
-              {
-                "indexed": false,
-                "name": "initialKeysCount",
-                "type": "uint256"
               }
             ],
             "name": "MiningKeyChanged",
@@ -730,6 +747,23 @@
               }
             ],
             "name": "InitialKeyCreated",
+            "type": "event"
+          },
+          {
+            "anonymous": false,
+            "inputs": [
+              {
+                "indexed": false,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "indexed": false,
+                "name": "key",
+                "type": "address"
+              }
+            ],
+            "name": "Migrated",
             "type": "event"
           }
         ]
