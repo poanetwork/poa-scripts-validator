@@ -1,92 +1,93 @@
 var fs = require('fs');
-var Web3 = require('web3');
 var toml = require('toml');
+var getConfig = require('./utils/getConfig');
+var configureWeb3 = require('./utils/configureWeb3');
+var errorFinish = require('./utils/errorResponse');
 
 var tomlPath = process.argv[2] || '../node.toml';
 
-var config = getConfig();
+var rpc;
+var config;
+var web3;
+var keysManager;
+var polling_id;
 
 transferRewardToPayoutKey();
 
-function transferRewardToPayoutKey() {
-	findKeys(findKeysCallBack);
-}
+async function transferRewardToPayoutKey() {
+	try { 
+		config = await getConfig(); 
+	} catch (err) { 
+		return errorFinish(err); 
+	}
+	
+	rpc = process.env.RPC || config.Ethereum[config.environment].rpc || 'http://127.0.0.1:8545';
+	var KeysManagerAddress = config.Ethereum.contracts.KeysManager.addr;
+	var KeysManagerAbi = config.Ethereum.contracts.KeysManager.abi;
 
-function findKeys(cb) {
-	var tomlDataStr = fs.readFileSync(tomlPath, 'utf8');
+	try { 
+		web3 = await configureWeb3(rpc); 
+	} catch (err) { 
+		return errorFinish(err); 
+	}
 
-	var tomlData = toml.parse(tomlDataStr);
-	var miningKey = tomlData.mining.engine_signer;
-	retrievePayoutKey(miningKey, function(web3, payoutKey) {
-		cb(web3, miningKey, payoutKey);
-	});
-}
+	try { 
+		keysManager = await new web3.eth.Contract(KeysManagerAbi, KeysManagerAddress); 
+	} catch (err) { 
+		return errorFinish(err); 
+	}
+	
+	var miningKey;
+	var payoutKey;
+	try {
+		[miningKey, payoutKey] = await findKeys();
+	} catch(e) {
+		return errorFinish(e);
+	}
 
-function findKeysCallBack(web3, miningKey, payoutKey) {
 	console.log("miningKey = " + miningKey);
 	console.log("payoutKey = " + payoutKey);
-	if (!miningKey || !payoutKey || payoutKey == "0x0000000000000000000000000000000000000000") {
+	if ( miningKey == "0x0000000000000000000000000000000000000000"
+		|| payoutKey == "0x0000000000000000000000000000000000000000"
+		|| !web3.utils.isAddress(miningKey)
+		|| !web3.utils.isAddress(payoutKey)
+	) {
 		var err = {code: 500, title: "Error", message: "Payout key or mining key or both are undefined"};
-		return finishScript(err);
+		return errorFinish(err);
 	}
 	transferRewardToPayoutKeyTX(web3, miningKey, payoutKey);
 }
 
-function retrievePayoutKey(miningKey, cb) {
-	var contractAddress = config.Ethereum.contracts.KeysManager.addr;
-	attachToContract(contractAddress, miningKey, retrievePayoutKeyCallBack, cb);
-}
+function findKeys() {
+	return new Promise((resolve, reject) => {
+		fs.readFile(tomlPath, 'utf8', async function(err, _toml) {
+			if (err) reject(err);
 
-function retrievePayoutKeyCallBack(err, web3, contract, miningKey, cb) {
-	if (err) return finishScript(err);
-	contract.methods.getPayoutByMining(miningKey).call(function(err, payoutKey) {
-		if (err) return finishScript(err);
-		cb(web3, payoutKey);
-	});
-}
+			var tomlData = toml.parse(_toml);
+			var miningKey = tomlData.mining.engine_signer;
+			var payoutKey;
+			try {
+				payoutKey = await keysManager.methods.getPayoutByMining(miningKey).call();
+			} catch(e) {
+				reject(e);
+			}
 
-function getConfig() {
-	var config = JSON.parse(fs.readFileSync('../config.json', 'utf8'));
-	return config;
-}
-
-function configureWeb3(miningKey, cb) {
-	var web3;
-	if (typeof web3 !== 'undefined') web3 = new Web3(web3.currentProvider);
-	else web3 = new Web3(new Web3.providers.HttpProvider(config.Ethereum[config.environment].rpc));
-
-	if (!web3) return finishScript(err);
-	
-	web3.eth.net.isListening().then(function(isListening) {
-		if (!isListening) {
-			var err = {code: 500, title: "Error", message: "check RPC"};
-			return finishScript(err);
-		}
-
-		web3.eth.defaultAccount = miningKey;
-		cb(null, web3);
-	}, function(err) {
-		return finishScript(err);
-	});
-}
-
-function attachToContract(contractAddress, miningKey, retrievePayoutKeyCallBack, cb) {
-	configureWeb3(miningKey, function(err, web3) {
-		if (err) return finishScript(err);
-
-		var contractABI = config.Ethereum.contracts.KeysManager.abi;
-		var contractInstance = new web3.eth.Contract(contractABI, contractAddress);
-		
-		if (retrievePayoutKeyCallBack) retrievePayoutKeyCallBack(null, web3, contractInstance, miningKey, cb);
-	});
+			resolve([miningKey,payoutKey]);
+		})
+	})
 }
 
 async function transferRewardToPayoutKeyTX(web3, _from, _to) {
-	var balance = await web3.eth.getBalance(_from);
+	var balance;
+	try {
+		balance = await web3.eth.getBalance(_from);
+	} catch (e) {
+		return errorFinish(e);
+	}
 	balance = big(balance)
 	if (balance <= 0) {
 		var err = {"code": 500, "title": "Error", "message": "Balance of mining key is empty"}
-		return finishScript(err);
+		return errorFinish(err);
 	}
 	console.log("balance from: " + balance);
 	var gasPrice = web3.utils.toWei(big('1'), 'gwei');
@@ -97,24 +98,60 @@ async function transferRewardToPayoutKeyTX(web3, _from, _to) {
 	console.log("amount to transfer: " + amountToSend);
 	if (amountToSend <= 0) {
 		var err = {"code": 500, "title": "Error", "message": "Insufficient balance of mining key"}
-		return finishScript(err);
+		return errorFinish(err);
 	}
 
-	web3.eth.sendTransaction({gas: estimatedGas, from: _from, to: _to, value: amountToSend, gasPrice: gasPrice}, function(err, result) {
-		finishScript(err, result, _from, _to);
+	var isMined = false;
+	var txParams = {gas: estimatedGas, from: _from, to: _to, value: amountToSend, gasPrice: gasPrice};
+	console.log(`txParams:\n${JSON.stringify(txParams, null, 3)}`);
+	web3.eth.sendTransaction(txParams)
+	.on('transactionHash', txHash => checkTxMined(txHash, pollingReceiptCheck))
+	.on('receipt', (receipt) => {
+		if (isMined) return;
+		isMined = true;
+		clearTimeout(polling_id);
+	    finishScript(receipt, _from, _to);
+	})
+	.on('error', (err) => {
+		if (isMined) return;
+		errorFinish(err);
 	});
 
-	function big(x) {
-		return new web3.utils.BN(x);
+	function pollingReceiptCheck(err, txHash, receipt) {
+		if (isMined) return;
+		if (err) return errorFinish(err);
+
+		if (receipt) {
+			if (receipt.blockNumber) {
+				console.log(`${txHash} is mined from polling of tx receipt`)
+				isMined = true;
+				clearTimeout(polling_id);
+				finishScript(receipt, _from, _to);
+			} else {
+				repeatPolling();
+			}
+		} else {
+			repeatPolling();
+		}
+
+		function repeatPolling() {
+			console.log(`${txHash} is still pending. Polling of transaction once more`)
+			polling_id = setTimeout(() => checkTxMined(txHash, pollingReceiptCheck), 5000)
+		}
 	}
 }
 
-function finishScript(err, result, miningKey, payoutKey) {
-	if (err) {
-		console.log("Something went wrong with transferring reward to payout key");
-		console.log(err.message);
-		return;
-	}
+function big(x) {
+	return new web3.utils.BN(x);
+}
 
-	console.log("Reward is sent to payout key (" + payoutKey + ") from mining key (" + miningKey + ")");
+function checkTxMined(txHash, _pollingReceiptCheck) {
+	web3.eth.getTransactionReceipt(txHash, (err, receipt) => {
+		_pollingReceiptCheck(err, txHash, receipt)
+	})
+}
+
+function finishScript(receipt, miningKey, payoutKey) {
+	console.log(`Transaction receipt:\n${JSON.stringify(receipt, null, 3)}`)
+	console.log(`Reward is sent with tx ${receipt.transactionHash} to payout key (${payoutKey}) from mining key (${miningKey})`);
 }
