@@ -12,6 +12,13 @@ var web3;
 var keysManager;
 var polling_id;
 
+var SCRIPT_TIMEOUT_SEC = 500; // 2*50 blocks
+if (SCRIPT_TIMEOUT_SEC) {
+	setTimeout(function () {
+		throw new Error("Script is taking too long to complete (> " + SCRIPT_TIMEOUT_SEC + "sec). Exiting");
+	}, SCRIPT_TIMEOUT_SEC*1000);
+}
+
 transferRewardToPayoutKey();
 
 async function transferRewardToPayoutKey() {
