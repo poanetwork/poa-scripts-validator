@@ -1,8 +1,9 @@
 var fs = require('fs');
 var Web3 = require('web3');
 var toml = require('toml');
-
+const network = process.env.NETWORK;
 var tomlPath = process.argv[2] || '../node.toml';
+const KeysManagerAbi = require('../KeysManager.json.abi.json');
 
 var config = getConfig();
 
@@ -33,7 +34,7 @@ function findKeysCallBack(web3, miningKey, payoutKey) {
 }
 
 function retrievePayoutKey(miningKey, cb) {
-	var contractAddress = config.Ethereum.contracts.KeysManager.addr;
+	var contractAddress = config.Ethereum.contracts.KeysManager[network].addr;
 	attachToContract(contractAddress, miningKey, retrievePayoutKeyCallBack, cb);
 }
 
@@ -74,8 +75,7 @@ function attachToContract(contractAddress, miningKey, retrievePayoutKeyCallBack,
 	configureWeb3(miningKey, function(err, web3) {
 		if (err) return finishScript(err);
 
-		var contractABI = config.Ethereum.contracts.KeysManager.abi;
-		var contractInstance = new web3.eth.Contract(contractABI, contractAddress);
+		var contractInstance = new web3.eth.Contract(KeysManagerAbi, contractAddress);
 		
 		if (retrievePayoutKeyCallBack) retrievePayoutKeyCallBack(null, web3, contractInstance, miningKey, cb);
 	});
