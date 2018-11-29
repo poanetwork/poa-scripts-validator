@@ -97,7 +97,7 @@ async function transferRewardToPayoutKeyTX(web3, _from, _to) {
 		return errorFinish(err);
 	}
 	console.log("balance from: " + balance);
-	var gasPrice = web3.utils.toWei(big('1'), 'gwei');
+	var gasPrice = web3.utils.toWei(big('0'), 'gwei');
 	console.log("gas price: " + gasPrice);
 	var estimatedGas = big(21000);
 	console.log("estimated gas: " + estimatedGas);
