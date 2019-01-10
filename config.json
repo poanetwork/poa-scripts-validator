@@ -6,7 +6,7 @@
     },
     "contracts": {
       "KeysManager": {
-        "addr": "0x1aa02bd52fe418ac70263351282f66f1dacf898c",
+        "addr": "0x3F6BA50D5A6Af3786af656eA76B33EFDEd51a819",
         "abi": [
           {
             "constant": true,
